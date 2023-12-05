@@ -1,0 +1,1 @@
+import sys; lineLst = open(sys.argv[1:][0]).read().splitlines()
