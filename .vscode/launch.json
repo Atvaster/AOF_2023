@@ -8,7 +8,7 @@
       "program": "${file}",
       "console": "integratedTerminal",
       "args":
-        "Day_6/Data/inputSimple.txt"
+        "Day_6/Data/input.txt"
     }
   ]
 }
