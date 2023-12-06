@@ -1,3 +1,4 @@
+import time; sT = time.time()
 import sys; lineLst = open(sys.argv[1:][0]).read().splitlines() + [""]
 initSeeds = [int(seed) for seed in lineLst[0].split(": ")[1].split(" ")]
 lineLst = lineLst[1:]
@@ -23,53 +24,41 @@ for seed in initSeeds:
   locs.add(num)
 
 seedRanges = [(initSeeds[ind], initSeeds[ind+1]) for ind in range(0, len(initSeeds), 2)]
+sdRange2 = [(val[0], val[0] + val[1] - 1) for val in seedRanges]
+dctLst2 = [sorted([(val[0], val[0] + val[2] - 1, val[1] - val[0])for val in dct]) for dct in dctLst]
 locs2 = set()
 
-def seedRangeRecurse(curRange, dctInd):
-  pieces = []
-  for ind, numRange in enumerate(dctLst[dctInd]):
-    if numRange[0] <= curRange[0] <= numRange[0] + numRange[2] or numRange[0] <= curRange[0] + curRange[1] <= numRange[0] + numRange[2]:
-      start = max(curRange[0], numRange[0])
-      step = curRange[1] if curRange[0] + curRange[1] < numRange[0] + numRange[2] else numRange[2]
-      splitRange = (start, step)
-      pieces.append((splitRange, ind))
-  if pieces:
-    pieces.sort(key = lambda x: x[0][0])
-    newPieces = []
-    if pieces[0][0][0] != curRange[0]:
-      newPieces.append(((curRange[0], pieces[0][0][0] - curRange[0]), -1))
-    for ind, piece in enumerate(pieces):
-      newPieces.append(piece)
-      piece = piece[0]
-      if ind + 1 < len(pieces) and piece[0] + piece[1] != pieces[ind+1][0][0]:
-        newPieces.append(((piece[0] + piece[1], pieces[ind+1][0] - piece[0] + piece[1]), -1))
-    if pieces[-1][0][0] + pieces[-1][0][1] != curRange[0] + curRange[1]:
-      newPieces.append(((pieces[-1][0][0] + pieces[-1][0][1], curRange[1] - pieces[-1][0][0] + pieces[-1][0][1]), -1))
 
-    if dctInd + 1 < len(dctLst):
-      mainLst = []
-      for piece, ind in newPieces:
-        if ind == -1:
-          mainLst.append(seedRangeRecurse(piece, dctInd + 1))
-        else:
-          mainLst.append(seedRangeRecurse((dctLst[dctInd][ind][0], piece[1]), dctInd + 1))
-      return [el for lst in mainLst for el in lst]
-    else:
-      return newPieces
+def seedRangeRecurse(curRange, curDctInd):
+  retLst = []
+  lstUsed = []
+  for chkRange in dctLst2[curDctInd]:
+    if chkRange[0] <= curRange[0] <= chkRange[1] or chkRange[0] <= curRange[1] <= chkRange[1]:
+      newRange = (max(chkRange[0], curRange[0]), min(chkRange[1], curRange[1]))
+      lstUsed.append(newRange)
+      updatedRange = (newRange[0] + chkRange[2], newRange[1] + chkRange[2])
+      retLst.append(seedRangeRecurse(updatedRange, curDctInd + 1) if curDctInd + 1 < len(dctLst2) else [(newRange[0] + chkRange[2], newRange[1] + chkRange[2])])
+
+  notFound = []
+  if lstUsed:
+    if lstUsed[0][0] != curRange[0]:
+      lstUsed = [(curRange[0], curRange[0])] + lstUsed
+    if lstUsed[-1][1] != curRange[1]:
+      lstUsed += [(curRange[1], curRange[1])]
+    for ind in range(len(lstUsed) - 1):
+      if lstUsed[ind][1] != lstUsed[ind+1][0]:
+        notFound.append((lstUsed[ind][1], lstUsed[ind+1][0]))
   else:
-    return([])
+    notFound.append(curRange)
+  for passRange in notFound:
+    retLst.append(seedRangeRecurse(passRange, curDctInd + 1) if curDctInd + 1 < len(dctLst2) else [passRange])
+  return [el for lst in retLst for el in lst]
 
-for sRange in seedRanges:
-  print(seedRangeRecurse(sRange, 0))
+allNums = []
+for sRange in sdRange2:
+  allNums += seedRangeRecurse(sRange, 0)
 
-# for seed in range(sRange[0], sRange[0] + sRange[1]):
-#   num = seed
-#   for dct in dctLst:
-#     for numRange in dct:
-#       diff = num - numRange[0]
-#       if 0 <= diff < numRange[2]:
-#         num = numRange[1] + diff
-#         break
-#   locs2.add(num)
 
-print(min(locs))
+print(f"Part 1: {min(locs)}; Part 2: {min(allNums)[0]}")
+
+print(f"Runtime: {(time.time() - sT)*1000:.6}ms")
