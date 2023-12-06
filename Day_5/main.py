@@ -1,21 +1,25 @@
+#Import and simple init line list
 import time; sT = time.time()
-import sys; lineLst = open(sys.argv[1:][0]).read().splitlines() + [""]
+import sys; lineLst = open(sys.argv[1:][0]).read().splitlines()
 initSeeds = [int(seed) for seed in lineLst[0].split(": ")[1].split(" ")]
-lineLst = lineLst[1:]
-dctLst = []
+lineLst = lineLst[1:] + [""]
+
+
+#
+mapLst = []
 for ind, line in enumerate(lineLst):
   if ":" in line:
-    curDct = []
+    curConvert = []
     for subInd, subLine in enumerate(lineLst[ind+1:lineLst[ind:].index("")+ind]):
       val1, val2, amnt = subLine.split(" ")
-      val1 = int(val1); val2 = int(val2); amnt = int(amnt)
-      curDct.append((val2, val1, amnt))
-    dctLst.append(curDct)
+      curConvert.append((int(val2), int(val1), int(amnt)))
+    mapLst.append(curConvert)
+
 
 locs = set()
 for seed in initSeeds:
   num = seed
-  for dct in dctLst:
+  for dct in mapLst:
     for numRange in dct:
       diff = num - numRange[0]
       if 0 <= diff < numRange[2]:
@@ -23,41 +27,38 @@ for seed in initSeeds:
         break
   locs.add(num)
 
-seedRanges = [(initSeeds[ind], initSeeds[ind+1]) for ind in range(0, len(initSeeds), 2)]
-sdRange2 = [(val[0], val[0] + val[1] - 1) for val in seedRanges]
-dctLst2 = [sorted([(val[0], val[0] + val[2] - 1, val[1] - val[0])for val in dct]) for dct in dctLst]
-locs2 = set()
+
+seedRanges = [(initSeeds[ind], initSeeds[ind] + initSeeds[ind+1] - 1) for ind in range(0, len(initSeeds), 2)]
+mapRanges = [sorted([(val[0], val[0] + val[2] - 1, val[1] - val[0])for val in dct]) for dct in mapLst]
 
 
 def seedRangeRecurse(curRange, curDctInd):
   retLst = []
   lstUsed = []
-  for chkRange in dctLst2[curDctInd]:
+  for chkRange in mapRanges[curDctInd]:
     if chkRange[0] <= curRange[0] <= chkRange[1] or chkRange[0] <= curRange[1] <= chkRange[1]:
       newRange = (max(chkRange[0], curRange[0]), min(chkRange[1], curRange[1]))
-      lstUsed.append(newRange)
       updatedRange = (newRange[0] + chkRange[2], newRange[1] + chkRange[2])
-      retLst.append(seedRangeRecurse(updatedRange, curDctInd + 1) if curDctInd + 1 < len(dctLst2) else [(newRange[0] + chkRange[2], newRange[1] + chkRange[2])])
+      lstUsed.append(newRange)
+      retLst.append(seedRangeRecurse(updatedRange, curDctInd + 1) if curDctInd + 1 < len(mapRanges) else [updatedRange])
 
-  notFound = []
-  if lstUsed:
-    if lstUsed[0][0] != curRange[0]:
-      lstUsed = [(curRange[0], curRange[0])] + lstUsed
-    if lstUsed[-1][1] != curRange[1]:
-      lstUsed += [(curRange[1], curRange[1])]
-    for ind in range(len(lstUsed) - 1):
-      if lstUsed[ind][1] != lstUsed[ind+1][0]:
-        notFound.append((lstUsed[ind][1], lstUsed[ind+1][0]))
-  else:
-    notFound.append(curRange)
-  for passRange in notFound:
-    retLst.append(seedRangeRecurse(passRange, curDctInd + 1) if curDctInd + 1 < len(dctLst2) else [passRange])
+  if not lstUsed:
+    retLst.append(seedRangeRecurse(curRange, curDctInd + 1) if curDctInd + 1 < len(mapRanges) else [curRange])
+    return [el for lst in retLst for el in lst]
+
+  if lstUsed[0][0] != curRange[0]:
+    lstUsed = [(curRange[0], curRange[0])] + lstUsed
+  if lstUsed[-1][1] != curRange[1]:
+    lstUsed = lstUsed + [(curRange[1], curRange[1])]
+  for ind in range(len(lstUsed) - 1):
+    if lstUsed[ind][1] != lstUsed[ind+1][0]:
+      passRange = (lstUsed[ind][1], lstUsed[ind+1][0])
+      retLst.append(seedRangeRecurse(passRange, curDctInd + 1) if curDctInd + 1 < len(mapRanges) else [passRange])
+
   return [el for lst in retLst for el in lst]
 
-allNums = []
-for sRange in sdRange2:
-  allNums += seedRangeRecurse(sRange, 0)
 
+allNums = [el for sRange in seedRanges for el in seedRangeRecurse(sRange, 0)]
 
 print(f"Part 1: {min(locs)}; Part 2: {min(allNums)[0]}")
 
