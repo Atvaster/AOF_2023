@@ -29,10 +29,12 @@ for seed in initSeeds:
 
 
 seedRanges = [(initSeeds[ind], initSeeds[ind] + initSeeds[ind+1] - 1) for ind in range(0, len(initSeeds), 2)]
+seedRanges = [seedRanges[2]]
 mapRanges = [sorted([(val[0], val[0] + val[2] - 1, val[1] - val[0])for val in dct]) for dct in mapLst]
 
-
+rangeSet = []
 def seedRangeRecurse(curRange, curDctInd):
+  rangeSet.append((curRange, curDctInd))
   retLst = []
   lstUsed = []
   for chkRange in mapRanges[curDctInd]:
@@ -57,9 +59,22 @@ def seedRangeRecurse(curRange, curDctInd):
 
   return [el for lst in retLst for el in lst]
 
+print(seedRanges)
 
-allNums = [el for sRange in seedRanges for el in seedRangeRecurse(sRange, 0)]
+num = 1893460704
+for dct in mapLst:
+  for numRange in dct:
+    diff = num - numRange[0]
+    if 0 <= diff < numRange[2]:
+      num = numRange[1] + diff
+      break
+  print(num)
 
-print(f"Part 1: {min(locs)}; Part 2: {min(allNums)[0]}")
+print("fuck my life\n")
+#allNums = sorted([el for sRange in seedRanges for el in seedRangeRecurse(sRange, 0)])
+#print(f"Part 1: {min(locs)}; Part 2: {min(allNums)[0]}")
+print(mapRanges[1])
+print(min(seedRangeRecurse((1653302078, 2115309656), 1)))
+print(sorted(rangeSet, key = lambda x: x[1]))
 
 print(f"Runtime: {(time.time() - sT)*1000:.6}ms")
