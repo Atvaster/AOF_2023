@@ -1,5 +1,6 @@
 import sys; lineLst = open(sys.argv[1:][0]).read().splitlines()
 import math
+import time; sT = time.time()
 mapW = len(lineLst[0])
 mapH = len(lineLst)
 global pipeMap, startType
@@ -58,7 +59,7 @@ def BFS(root, goal):
 
 
 def getInner():
-  vertChars = {"|", "L", "J", "J"}
+  vertChars = {"|", "L", "J"}
   if startType:
     vertChars.add("S")
   positions = set()
@@ -73,3 +74,4 @@ def getInner():
 global mainLoop
 mainLoop = {*BFS(start, "")}
 print(f"Part 1: {len(mainLoop)//2}, Part 2: {len(getInner())}")
+print(f"Computation time: {(time.time()-sT)*1000:.6}ms")
